@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.eju.live.ejulivepublisherdemo.MainActivity">
+
+    <SurfaceView
+        android:id="@+id/preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true" />
+
+    <Button
+        android:id="@+id/publish"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:text="publish" />
+
+    <Button
+        android:id="@+id/swCam"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/publish"
+        android:layout_toRightOf="@+id/publish"
+        android:text="switch" />
+
+    <Button
+        android:id="@+id/record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/publish"
+        android:layout_toRightOf="@id/swCam"
+        android:text="record" />
+
+    <Button
+        android:id="@+id/focus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/publish"
+        android:layout_toRightOf="@id/record"
+        android:text="focus" />
+
+    <Button
+        android:id="@+id/addFocus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="50dip"
+        android:text="+" />
+
+    <Button
+        android:id="@+id/subFocus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dip"
+        android:layout_toRightOf="@id/addFocus"
+        android:text="-" />
+
+    <EditText
+        android:id="@+id/url"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/accent_material_light"
+        android:textSize="14dp" />
+
+    <ZoomControls
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/zoomControls"
+        android:layout_above="@+id/addFocus"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+</RelativeLayout>
