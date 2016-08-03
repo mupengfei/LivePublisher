@@ -1,6 +1,7 @@
 package com.eju.live.publisher.impl;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.hardware.Camera;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -8,7 +9,6 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
 import com.eju.live.publisher.SrsEncoder;
 import com.eju.live.publisher.SrsFlvMuxer;
@@ -17,14 +17,17 @@ import com.eju.live.publisher.config.PublisherConfig;
 import com.eju.live.publisher.inter.IPublisher;
 import com.eju.live.publisher.inter.IPublisherListerner;
 import com.eju.live.publisher.rtmp.RtmpPublisher;
+import com.visionin.core.VSRawBytesCallback;
+import com.visionin.core.VSVideoFrame;
+//import com.visionin.core.VSYUV420PCallback;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback, Camera.PreviewCallback {
     private Activity mActivity;
+    private VSVideoFrame videoFrame = null;
     private String mToken;
     private PublisherConfig mConfig;
     private IPublisherListerner mListerner;
@@ -39,9 +42,15 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
     private int mCamId = Camera.getNumberOfCameras() - 1; // default camera
     private byte[] mYuvFrameBuffer = new byte[SrsEncoder.VPREV_WIDTH * SrsEncoder.VPREV_HEIGHT * 3 / 2];
 
-    private String rtmpUrl = "rtmp://101.231.84.147/live/abcdefgd";
-
+    private String rtmpUrl = "rtmp://pili-publish.qdtong.net/leju-live-2/e74b76?key=0fec13c6a0c9ae08";
+//private String rtmpUrl ="rtmp://rtmppush.ejucloud.com/ehoush/abcd";
     private boolean mIsReconnect = true;
+
+    private boolean mIsCameraFilter = true;
+
+    private boolean mIsView = false;
+
+    private float lightsize = 1f;
 
     private SrsFlvMuxer flvMuxer = new SrsFlvMuxer(new RtmpPublisher.EventHandler() {
         @Override
@@ -107,11 +116,13 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
     private SrsEncoder mEncoder = new SrsEncoder(flvMuxer, mp4Muxer);
 
     @Override
-    public void init(Activity activity, String token, PublisherConfig config, IPublisherListerner listerner) {
+    public void init(Activity activity, SurfaceView cameraView, String token, PublisherConfig config, IPublisherListerner listerner) {
         this.mActivity = activity;
+        this.mCameraView = cameraView;
         this.mToken = token;
         this.mConfig = config;
         this.mListerner = listerner;
+        startCamera();
     }//相机参数的初始化设置
 
     private void initCamera() {
@@ -149,14 +160,60 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
         mCamera.setDisplayOrientation(result);
 
         mCamera.addCallbackBuffer(mYuvFrameBuffer);
-        mCamera.setPreviewCallbackWithBuffer(this);
+//        mCamera.setPreviewCallbackWithBuffer(this);
+
+//        try {
+//            mCamera.setPreviewDisplay(mCameraView.getHolder());
+//            if (!mIsView) {
+////                    mCamera.stopPreview();
+//                mCamera.startPreview();
+//                mCamera.autoFocus(null);
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
         try {
-            mCamera.setPreviewDisplay(mCameraView.getHolder());
-        } catch (IOException e) {
+            videoFrame = new VSVideoFrame(mCameraView.getHolder().getSurface());
+        } catch (Exception e) {
             e.printStackTrace();
+            return;
         }
-        mCamera.startPreview();
-        mCamera.autoFocus(null);
+//
+//        if(isFront){
+            videoFrame.setCameraPosition(VSVideoFrame.CAMERA_FACING_FRONT);
+            videoFrame.setOutputImageOritation(Configuration.ORIENTATION_PORTRAIT);
+            videoFrame.setVideoSize(1280, 720);
+            videoFrame.setMirrorFrontVideo(true);
+            videoFrame.setMirrorFrontPreview(true);
+//        }else {
+//            videoFrame.setCameraPosition(VSVideoFrame.CAMERA_FACING_BACK);
+//            videoFrame.setOutputImageOritation(Configuration.ORIENTATION_PORTRAIT);
+//            videoFrame.setVideoSize(1280,720);
+//            videoFrame.setMirrorBackVideo(true);
+//            videoFrame.setMirrorBackPreview(true);
+//        }
+        videoFrame.setOutputSize(360, 640);
+        videoFrame.setNV21Callback(new VSRawBytesCallback() {
+            @Override
+            public void outputBytes(byte[] data) {
+                onGetYuvFrame(data);
+            }
+        });
+        videoFrame.setSmoothLevel(0.5f);
+        videoFrame.setBrightenLevel(0.5f);
+        videoFrame.setToningLevel(0.5f);
+
+        videoFrame.start();
+
+
+        try {
+            mCamera.setPreviewTexture(videoFrame.surfaceTexture());
+            mCamera.startPreview();
+            mCamera.autoFocus(null);
+        } catch (Exception e) {
+
+        }
     }
 
     private static int[] findClosestFpsRange(int expectedFps, List<int[]> fpsRanges) {
@@ -176,9 +233,8 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
     }
 
     @Override
-    public void startPublish(int cameraId, SurfaceView cameraView) {
-        this.mCameraView = cameraView;
-        mCameraView.getHolder().addCallback(this);
+    public void startPublish(int cameraId) {
+        Log.e("sdsds", "sdsdsdsd");
 //        mCamera = Camera.open(cameraId);
 //        initCamera();
         try {
@@ -208,26 +264,38 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
     }
 
     @Override
+    public void switchCameraFilter() {
+        if (mCamera != null && mEncoder != null) {
+            stopCamera();
+            this.mIsCameraFilter = !this.mIsCameraFilter;
+            startCamera();
+        }
+    }
+
+    @Override
     public void focus() {
         mCamera.autoFocus(null);
     }
 
     @Override
     public void addFocus() {
-        if (!mCamera.getParameters().isSmoothZoomSupported()) {
-            try {
-                Camera.Parameters params = mCamera.getParameters();
-                final int MAX = params.getMaxZoom();
-                if (MAX == 0)
-                    return;
-                int zoomValue = params.getZoom();
-                zoomValue += 1;
-                params.setZoom(zoomValue);
-                mCamera.setParameters(params);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        lightsize += 1.0f;
+        Log.e("lightsize", lightsize + "");
+        videoFrame.setBrightenLevel(lightsize);
+//        if (!mCamera.getParameters().isSmoothZoomSupported()) {
+//            try {
+//                Camera.Parameters params = mCamera.getParameters();
+//                final int MAX = params.getMaxZoom();
+//                if (MAX == 0)
+//                    return;
+//                int zoomValue = params.getZoom();
+//                zoomValue += 1;
+//                params.setZoom(zoomValue);
+//                mCamera.setParameters(params);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     @Override
@@ -306,27 +374,64 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
-        if (mCamera != null) {
-            try {
-                mCamera.setPreviewDisplay(mCameraView.getHolder());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        Log.e("sdsds", "sdsdsdsd");
+//        try {
+//            videoFrame = new VSVideoFrame(surfaceHolder.getSurface());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return;
+//        }
+//
+//        videoFrame.setCameraPosition(VSVideoFrame.CAMERA_FACING_FRONT);
+//        videoFrame.setOutputImageOritation(Configuration.ORIENTATION_PORTRAIT);
+//
+//        videoFrame.setVideoSize(mEncoder.VCROP_WIDTH, mEncoder.VCROP_HEIGHT);
+//
+//        videoFrame.setMirrorFrontVideo(true);
+//        videoFrame.setMirrorFrontPreview(true);
+//
+//        videoFrame.setOutputSize(360, 640);
+//        videoFrame.setYuv420PCallback(new VSYUV420PCallback() {
+//            @Override
+//            public void outputBytes(byte[] bytes) {
+//                //Log.e("Visionin", ""+bytes.length);
+//            }
+//        });
+//
+//        videoFrame.setSmoothLevel(0.5f);
+//        videoFrame.setBrightenLevel(0.5f);
+//        videoFrame.setToningLevel(0.5f);
+
+//        videoFrame.start();
+
+        try {
+//            mCamera.setPreviewTexture(videoFrame.surfaceTexture());
+            mCamera.setPreviewDisplay(mCameraView.getHolder());
+            mCamera.startPreview();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+        Log.e("surfaceChanged", "surfaceChanged");
 
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        Log.e("surfaceDestroyed", "surfaceDestroyed");
 
     }
 
     public String getRtmpUrl() {
         return this.rtmpUrl;
+    }
+
+    @Override
+    public Camera getCamera() {
+        return this.mCamera;
     }
 
     private void onGetYuvFrame(byte[] data) {
@@ -335,6 +440,11 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
 
     @Override
     public void onPreviewFrame(byte[] data, Camera c) {
+//        if (videoFrame != null && this.mIsCameraFilter) {
+//            videoFrame.makeCurrent();
+//            videoFrame.processBytes(data, mEncoder.VCROP_WIDTH, mEncoder.VCROP_HEIGHT, VSVideoFrame.GPU_NV21);
+//        }
+        Log.e("setPreviewCallback", "setPreviewCallbackWithBuffer");
         onGetYuvFrame(data);
         c.addCallbackBuffer(mYuvFrameBuffer);
     }
@@ -401,7 +511,6 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
         if (ret < 0) {
             return;
         }
-        startCamera();
         aworker = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -437,5 +546,9 @@ public class PublisherHardCodeImpl implements IPublisher, SurfaceHolder.Callback
             mCamera.release();
             mCamera = null;
         }
+    }
+
+    public SrsEncoder getEncoder() {
+        return mEncoder;
     }
 }

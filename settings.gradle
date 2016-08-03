@@ -1,1 +1,1 @@
-include ':app', ':ejulivepublisher'
+include ':app', ':ejulivepublisher', ':ejurtmppublisher', ':ejurtmppublisher'

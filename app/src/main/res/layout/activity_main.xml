@@ -68,6 +68,15 @@
         android:layout_toRightOf="@id/addFocus"
         android:text="-" />
 
+    <Button
+        android:id="@+id/switchFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="50dip"
+        android:layout_toRightOf="@id/subFocus"
+        android:text="filter" />
+
     <EditText
         android:id="@+id/url"
         android:layout_width="wrap_content"

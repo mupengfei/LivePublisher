@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/EjuLivePublisherDemo.iml" filepath="$PROJECT_DIR$/EjuLivePublisherDemo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/LivePublisher.iml" filepath="$PROJECT_DIR$/LivePublisher.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/ejulivepublisher/ejulivepublisher.iml" filepath="$PROJECT_DIR$/ejulivepublisher/ejulivepublisher.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ejurtmppublisher/ejurtmppublisher.iml" filepath="$PROJECT_DIR$/ejurtmppublisher/ejurtmppublisher.iml" />
     </modules>
   </component>
 </project>

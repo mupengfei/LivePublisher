@@ -1,14 +1,16 @@
 package com.eju.live.publisher.inter;
 
 import android.app.Activity;
+import android.graphics.Camera;
 import android.view.SurfaceView;
 
+import com.eju.live.publisher.SrsEncoder;
 import com.eju.live.publisher.config.PublisherConfig;
 
 public interface IPublisher {
-    void init(Activity mActivity, String token, PublisherConfig config, IPublisherListerner listerner);
+    void init(Activity mActivity, SurfaceView cameraView, String token, PublisherConfig config, IPublisherListerner listerner);
 
-    void startPublish(int cameraId, SurfaceView cameraView);
+    void startPublish(int cameraId);
 
     void stopPublish();
 
@@ -35,4 +37,10 @@ public interface IPublisher {
     void setResolution();
 
     String getRtmpUrl();
+
+    android.hardware.Camera getCamera();
+
+    SrsEncoder getEncoder();
+
+    void switchCameraFilter();
 }
